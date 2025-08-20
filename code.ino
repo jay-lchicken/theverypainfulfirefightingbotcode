@@ -10,8 +10,8 @@
 // ------------------- Parameters -------------------
 #define BASE_SPEED       210    // Base speed for forward motion
 int offset = -23;               // Offset to balance motors (adjust if turning)
-#define TURN_SPEED       150    // Speed to use when turning
-#define SLOWER_TURN_SPEED 115 //SPeed when recovering from turn
+#define TURN_SPEED       200    // Speed to use when turning
+#define SLOWER_TURN_SPEED 170 //SPeed when recovering from turn
 bool turningLeft = false;
 bool turningRight = false;
 
@@ -90,6 +90,8 @@ void turnRight() {
 void loop() {
   int leftIR = digitalRead(IR_LEFT_PIN);
   int rightIR = digitalRead(IR_RIGHT_PIN);
+  Serial.println(leftIR);
+  Serial.println(rightIR);
   if (turningRight){
     while ( rightIR != 1){
         slowTurn('R'); 
@@ -99,12 +101,17 @@ void loop() {
     }
     leftIR = digitalRead(IR_LEFT_PIN);
     stopMotors();
-    while ( leftIR != 1){
-        setLeftMotor(-SLOWER_TURN_SPEED);
-        leftIR = digitalRead(IR_LEFT_PIN);
+    unsigned long startTime = millis();  // Record the start time
 
+while (leftIR != 1) {
+    setLeftMotor(-SLOWER_TURN_SPEED);
+    leftIR = digitalRead(IR_LEFT_PIN);
 
+    if (millis() - startTime > 3000) {  // 3 seconds timeout
+        break;
     }
+}
+
     turningRight = false;
 
 
@@ -117,12 +124,17 @@ void loop() {
     }
     rightIR = digitalRead(IR_RIGHT_PIN);
     stopMotors();
-    while ( rightIR != 1){
-        setRightMotor(-SLOWER_TURN_SPEED);
-        rightIR = digitalRead(IR_RIGHT_PIN);  
+    unsigned long startTime = millis();  // Record the start time
 
+while (rightIR != 1) {
+    setRightMotor(-SLOWER_TURN_SPEED);
+    rightIR = digitalRead(IR_RIGHT_PIN);
 
+    if (millis() - startTime > 3000) {  // 3000ms = 3s
+        break;  // Exit the loop after 3 seconds
     }
+}
+
     turningLeft = false;
 
   }
@@ -133,10 +145,10 @@ void loop() {
   if (leftIR == 1 && rightIR == 1) {
     stopMotors();
     digitalWrite(RELAY_PIN, HIGH);
-    delay(2000);
+    delay(4000);
     digitalWrite(RELAY_PIN, LOW);
     delay(200);
-    moveForward();
+    moveBackward();
     delay(1000);
   } else if (leftIR == 0 && rightIR == 1) {
     turningLeft = true;
@@ -160,4 +172,3 @@ void moveBackward() {
   setLeftMotor(leftSpeed);
   setRightMotor(rightSpeed);
 }
-
